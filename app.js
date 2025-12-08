@@ -18,6 +18,12 @@ import wishlist from './routes/user.products.routes.js';
 import bookingsRouter from './routes/booking.routes.js';
 import servicesRouter from './routes/services.routes.js';
 import cartRoutes from './routes/cart.routes.js';
+import serviceProviderRouter from './routes/service.provider.routes.js';
+
+import morgan from 'morgan';
+import logger from './utils/logger.js';
+import { requestLogger } from './middlewares/request.logger.js';
+
 const app = express();
 
 // ============================================
@@ -37,6 +43,18 @@ app.use(
 		credentials: true, // Allow credentials if needed
 	})
 );
+
+// Morgan + Winston (for combined access logs)
+app.use(
+	morgan('dev', {
+		stream: {
+			write: (msg) => logger.info(msg.trim()),
+		},
+	})
+);
+
+// custom detailed logger
+app.use(requestLogger);
 
 // Security headers
 // app.use(helmet());
@@ -74,6 +92,7 @@ app.use('/api/user/', wishlist);
 app.use('/api/bookings', bookingsRouter);
 app.use('/api/services', servicesRouter);
 app.use('/api/cart', cartRoutes);
+app.use('/api/service-providers', serviceProviderRouter);
 
 // 404 handler
 app.all(/.*/, (req, res, next) => {

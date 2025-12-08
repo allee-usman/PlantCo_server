@@ -9,7 +9,13 @@ import {
 } from './otp.services.js';
 
 // Signup
-export const signup = async (username, email, passwordHash) => {
+export const signup = async (
+	username,
+	email,
+	passwordHash,
+	role = 'customer'
+) => {
+	// Check if email already exists
 	const existingUser = await User.findOne({ email }).lean();
 	if (existingUser) {
 		if (!existingUser.isVerified) {
@@ -20,11 +26,18 @@ export const signup = async (username, email, passwordHash) => {
 		}
 		throw new ErrorHandler('Email already in use', 400);
 	}
-
+	// Check if username already exists
 	const existingUsername = await User.findOne({ username }).lean();
 	if (existingUsername) throw new ErrorHandler('Username already taken', 400);
 
-	const user = await User.create({ username, email, passwordHash });
+	const user = new User({
+		username,
+		email,
+		passwordHash, // will be hashed in pre-save hook
+		role,
+	});
+
+	await user.save(); // triggers pre-save hook
 
 	const { expiresAt } = await createAndSendOTP({
 		key: `signup:${email}`,

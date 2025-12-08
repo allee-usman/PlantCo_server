@@ -77,13 +77,14 @@ const errorHandler = (err, req, res, next) => {
 
 		return res.status(400).json({
 			success: false,
+			message: 'Validation failed',
 			errors: err.issues.map((e) => {
 				// if e.path is empty, use the annotated location (set by validateRequest)
 				const location = err.meta?.location || 'body';
 				const path = e.path && e.path.length > 0 ? e.path.join('.') : location;
 
 				return {
-					path,
+					field: path,
 					message: e.message,
 				};
 			}),

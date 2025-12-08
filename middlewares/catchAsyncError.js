@@ -3,3 +3,5 @@ export const catchAsyncError = (fn) => {
 		Promise.resolve(fn(req, res, next)).catch(next);
 	};
 };
+
+export default catchAsyncError;

@@ -9,7 +9,22 @@ const ServiceSchema = new Schema(
 		title: { type: String, required: true },
 		slug: { type: String, index: true },
 		description: { type: String },
-		serviceType: { type: String, required: true }, // e.g. 'lawn_mowing'
+		serviceType: {
+			type: String,
+			required: true,
+			enum: [
+				'landscaping',
+				'lawn_mowing',
+				'garden_design',
+				'tree_trimming',
+				'plant_installation',
+				'pest_control',
+				'fertilization',
+				'seasonal_cleanup',
+				'plant_care',
+				'consultation',
+			],
+		}, // e.g. 'lawn_mowing'
 		hourlyRate: { type: Number, default: 0 },
 		durationHours: { type: Number, default: 1 }, // default duration offered by this service
 		currency: { type: String, default: 'PKR' },
