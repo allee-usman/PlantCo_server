@@ -1,73 +1,137 @@
-// routes/bookings.js
 import express from 'express';
-import { isAuthenticated } from '../middlewares/auth.middlewares.js';
 import * as bookingController from '../controllers/booking.controller.js';
+import {
+	authorizeRoles,
+	isAuthenticated,
+} from '../middlewares/auth.middlewares.js';
 import validateRequest from '../middlewares/validateRequest.js';
 import {
 	createBookingSchema,
-	listBookingsSchema,
+	getBookingsSchema,
 	updateBookingStatusSchema,
 	cancelBookingSchema,
-} from '../validators/booking.validator.js';
+	addReviewSchema,
+} from '../validations/booking.validation.js';
 
 const router = express.Router();
+// All routes require authentication
+router.use(isAuthenticated);
 
-/**
- * Create booking
- * - Access: authenticated user (customer)
- */
+// Create booking (customers only)
 router.post(
 	'/',
-	isAuthenticated,
+	authorizeRoles('customer'),
 	validateRequest(createBookingSchema),
 	bookingController.createBooking
 );
 
-/**
- * List bookings
- * - Access:
- *    - customer: their own bookings
- *    - provider (vendor/service_provider): bookings assigned to them
- *    - admin: all bookings
- * - Supports query params for filtering (e.g. ?role=provider&status=pending)
- */
+// Get my bookings
 router.get(
-	'/',
-	isAuthenticated,
-	validateRequest(listBookingsSchema),
-	bookingController.listBookings
+	'/my-bookings',
+	validateRequest(getBookingsSchema),
+	bookingController.getMyBookings
 );
 
-/**
- * Get single booking by id
- * - Access: booking owner (user), provider assigned to booking, or admin
- */
-router.get('/:id', isAuthenticated, bookingController.getBookingById);
+// Get upcoming bookings
+router.get('/upcoming', bookingController.getUpcomingBookings);
 
-/**
- * Update booking status (accept / decline / progress / complete)
- * - Access: provider or admin
- * - Body: { status: 'accepted' | 'declined' | 'in_progress' | 'completed' }
- * - Controller must validate allowed transitions and authorization.
- */
+// Get booking history
+router.get('/history', bookingController.getBookingHistory);
+
+// Get provider statistics (providers only)
+router.get(
+	'/provider/stats',
+	authorizeRoles('service_provider'),
+	bookingController.getProviderStats
+);
+
+// Get single booking
+router.get('/:bookingId', bookingController.getBooking);
+
+// Update booking status
 router.patch(
-	'/:id/status',
-	isAuthenticated,
+	'/:bookingId/status',
 	validateRequest(updateBookingStatusSchema),
 	bookingController.updateBookingStatus
 );
 
-/**
- * Cancel booking
- * - Access: booking user (customer) or provider/admin (depending on policy)
- * - Body: optional { reason: string }
- * - Controller should enforce cancellation policy, issue refunds if required.
- */
+// Cancel booking
 router.post(
-	'/:id/cancel',
-	isAuthenticated,
+	'/:bookingId/cancel',
 	validateRequest(cancelBookingSchema),
 	bookingController.cancelBooking
 );
+// Reject booking
+router.post(
+	'/:bookingId/reject',
+	validateRequest(cancelBookingSchema),
+	bookingController.rejectBooking
+);
+
+// Add review (customers only)
+router.post(
+	'/:bookingId/review',
+	authorizeRoles('customer'),
+	validateRequest(addReviewSchema),
+	bookingController.addReview
+);
+
+// Delete booking (admin only)
+router.delete(
+	'/:bookingId',
+	authorizeRoles('admin'),
+	bookingController.deleteBooking
+);
+
+/*
+1. /:userId/bookings/recent?limit={limit}
+Get recent bookings for the dashboard.
+Note: What if we calculate and store recent booking directly into user schema?
+
+Query Parameters:
+limit: Number of bookings to return (default: 5)
+
+Response:
+[
+  {
+    "id": "booking_123",
+    "customer": "John Doe",
+    "service": "Lawn Mowing",
+    "date": "2024-01-15",
+    "time": "10:00 AM",
+    "amount": 1500,
+    "status": "confirmed",
+    "location": "123 Main St, Lahore",
+    "customerPhone": "+92 300 1234567",
+    "notes": "Please bring your own equipment"
+  }
+]
+Status Values:
+pending: Awaiting confirmation
+confirmed: Booking confirmed
+in_progress: Service in progress
+completed: Service completed
+cancelled: Booking cancelled
+
+2. GET :userId/schedule/today
+Get today's scheduled appointments.
+
+Response:
+[
+  {
+    "id": "schedule_123",
+    "customer": "Jane Smith",
+    "service": "Garden Design",
+    "time": "2:00 PM",
+    "location": "456 Park Ave, Lahore",
+    "duration": 120,
+    "status": "confirmed",
+    "customerPhone": "+92 300 9876543",
+    "notes": "Customer prefers native plants"
+  }
+]
+
+
+*/
 
 export default router;

@@ -1,0 +1,24 @@
+export const SERVICE_TYPE_IMAGES = {
+	landscaping:
+		'https://res.cloudinary.com/dguvpd38e/image/upload/v1766670775/photo-1765872343114-c903af29368f_giz0my.jpg',
+	lawn_mowing:
+		'https://res.cloudinary.com/dguvpd38e/image/upload/v1766670467/photo-1689728222087-6984f72460c4_wasp5w.jpg',
+	garden_design:
+		'https://res.cloudinary.com/dguvpd38e/image/upload/v1766670675/photo-1764576323224-41ff50654003_eqk6pz.jpg',
+	tree_trimming:
+		'https://res.cloudinary.com/dguvpd38e/image/upload/v1766670852/photo-1754321860056-ca7254d5e7ac_lacl4u.jpg',
+	plant_installation:
+		'https://res.cloudinary.com/dguvpd38e/image/upload/v1766671583/pasquale-farro-vpq6z8rmNXI-unsplash_udhyss.jpg',
+	pest_control:
+		'https://res.cloudinary.com/dguvpd38e/image/upload/v1766671123/photo-1747659629851-a92bd71149f6_inms7e.jpg',
+	fertilization:
+		'https://res.cloudinary.com/dguvpd38e/image/upload/v1766671583/pasquale-farro-vpq6z8rmNXI-unsplash_udhyss.jpg',
+	seasonal_cleanup:
+		'https://res.cloudinary.com/dguvpd38e/image/upload/v1766671697/photo-1760446582794-c906908b5eb6_ptgkrm.jpg',
+	plant_care:
+		'https://res.cloudinary.com/dguvpd38e/image/upload/v1766671038/photo-1765822019705-e13a02ea9bae_ioohsb.jpg',
+	consultation:
+		'https://res.cloudinary.com/dguvpd38e/image/upload/v1766673830/photo-1758524052909-26de73dd9c27_ednitl.jpg',
+	default:
+		'https://res.cloudinary.com/dguvpd38e/image/upload/v1766671824/photo-1763690792910-ca8cd1a02516_wnhxtn.jpg',
+};

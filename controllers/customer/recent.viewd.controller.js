@@ -1,0 +1,22 @@
+import { catchAsyncError } from '../../middlewares/catchAsyncError.js';
+import * as userProductService from '../../services/user.product.services.js';
+
+export const getRecentlyViewedProducts = catchAsyncError(async (req, res) => {
+	const products = await userProductService.getRecentlyViewedProducts(
+		req.user._id
+	);
+	res.status(200).json({ success: true, products });
+});
+
+export const addToRecentlyViewed = catchAsyncError(async (req, res) => {
+	const recentlyViewed = await userProductService.addToRecentlyViewed(
+		req.user._id,
+		req.params.productId
+	);
+	res.status(200).json({ success: true, recentlyViewed });
+});
+
+export const clearRecentlyViewed = catchAsyncError(async (req, res) => {
+	await userProductService.clearRecentlyViewed(req.user._id);
+	res.status(200).json({ success: true, message: 'Recently viewed cleared.' });
+});

@@ -1,117 +1,104 @@
-import { Service } from '../models/service.model.js';
+// services/service.services.js
 import mongoose from 'mongoose';
-import {
-	BadRequestError,
-	NotFoundError,
-	ForbiddenError,
-} from '../utils/errors.js';
-import { success } from 'zod';
+import { BadRequestError, NotFoundError } from '../utils/errors.js';
+import Service from '../models/service.model.js';
 
-export async function createService({ providerId, payload }) {
-	// payload must include title & serviceType
+export const fetchServices = async (filters) => {
 	const {
-		title,
+		providerId,
 		serviceType,
-		hourlyRate,
-		durationHours,
-		extras = [],
-		description,
-		currency = 'PKR',
-		active = true,
-	} = payload || {};
-
-	if (!title || !serviceType)
-		throw new BadRequestError('title and serviceType are required');
-
-	const s = new Service({
-		provider: providerId,
-		title,
-		description,
-		serviceType,
-		hourlyRate: hourlyRate || 0,
-		durationHours: durationHours || 1,
-		currency,
-		extras,
 		active,
-	});
+		minRating,
+		tags,
+		page = 1,
+		limit = 10,
+	} = filters;
 
-	await s.save();
-	return s;
-}
+	let filter = {};
 
-export async function listServices({ query = {} }) {
-	const { page = 1, limit = 20, providerId, serviceType, active } = query;
-	const skip =
-		(Math.max(1, parseInt(page, 10)) - 1) * Math.max(1, parseInt(limit, 10));
-	const q = {};
-	if (providerId) q.provider = providerId;
-	if (serviceType) q.serviceType = serviceType;
-	if (typeof active !== 'undefined')
-		q.active = active === 'true' || active === true;
+	// provider filter
+	if (providerId) filter.provider = providerId;
 
-	const [services, total] = await Promise.all([
-		Service.find(q)
-			.sort({ createdAt: -1 })
-			.skip(skip)
-			.limit(Math.max(1, parseInt(limit, 10))),
-		Service.countDocuments(q),
-	]);
+	// MULTIPLE service types support
+	// accepts: ?serviceType=a,b,c **or** ?serviceType[]=a&serviceType[]=b
+	if (serviceType) {
+		const types = Array.isArray(serviceType)
+			? serviceType
+			: serviceType.split(',').map((t) => t.trim());
+
+		filter.serviceType = { $in: types };
+	}
+
+	// active true/false
+	if (active !== undefined) filter.active = active === 'true';
+
+	// rating filter
+	if (minRating) filter['meta.rating'] = { $gte: Number(minRating) };
+
+	// tags support multiple
+	if (tags) {
+		const tagList = Array.isArray(tags)
+			? tags
+			: tags.split(',').map((t) => t.trim());
+
+		filter['meta.tags'] = { $in: tagList };
+	}
+
+	// pagination values
+	const pageNum = Math.max(parseInt(page) || 1, 1);
+	const limitNum = Math.max(parseInt(limit) || 10, 1);
+	const skip = (pageNum - 1) * limitNum;
+
+	// console.log('Filters: ', filter, 'Limit: ', limit, 'LimitNum: ', limitNum);
+
+	// total count for pagination
+	const total = await Service.countDocuments(filter);
+
+	// console.log('Filters: ', filter);
+
+	// query
+	const services = await Service.find(filter)
+		.populate('provider', 'name email')
+		.skip(skip)
+		.limit(limitNum)
+		.sort({ createdAt: -1 });
+
+	// console.log({
+	// 	pageNum,
+	// 	limitNum,
+	// 	returned: services.length,
+	// });
 
 	return {
-		success: true,
-		data: services,
-		meta: { total, page: parseInt(page, 10), limit: parseInt(limit, 10) },
+		services,
+		meta: {
+			total,
+			page: pageNum,
+			limit: limitNum,
+			pageCount: Math.ceil(total / limitNum),
+		},
 	};
-}
+};
 
-export async function getServiceById({ serviceId }) {
-	if (!serviceId || !mongoose.isValidObjectId(serviceId))
-		throw new BadRequestError('Invalid serviceId');
+export const fetchServiceByIdOrSlug = async (idOrSlug) => {
+	if (!idOrSlug) throw new BadRequestError('Invalid serviceId');
 
-	const service = await Service.findById(serviceId).populate(
-		'provider',
-		'username role'
-	);
+	let service;
+
+	// Check if it's a valid ObjectId
+	if (mongoose.isValidObjectId(idOrSlug)) {
+		service = await Service.findById(idOrSlug).populate(
+			'provider',
+			'serviceProviderProfile'
+		);
+	} else {
+		// Treat as slug
+		service = await Service.findOne({ slug: idOrSlug }).populate(
+			'provider',
+			'_id serviceProviderProfile avatar name email phoneNumber'
+		);
+	}
+
 	if (!service) throw new NotFoundError('Service not found');
 	return service;
-}
-
-export async function updateService({
-	serviceId,
-	providerId,
-	payload,
-	requester,
-}) {
-	if (!serviceId || !mongoose.isValidObjectId(serviceId))
-		throw new BadRequestError('Invalid serviceId');
-
-	const service = await Service.findById(serviceId);
-	if (!service) throw new NotFoundError('Service not found');
-
-	// Only provider owner or admin can update
-	const isOwner = service.provider.toString() === providerId.toString();
-	const isAdmin = requester?.role === 'admin';
-	if (!isOwner && !isAdmin)
-		throw new ForbiddenError('Not authorized to update this service');
-
-	Object.assign(service, payload);
-
-	await service.save();
-	return service;
-}
-
-export async function deleteService({ serviceId, providerId, requester }) {
-	if (!serviceId || !mongoose.isValidObjectId(serviceId))
-		throw new BadRequestError('Invalid serviceId');
-
-	const service = await Service.findById(serviceId);
-	if (!service) throw new NotFoundError('Service not found');
-
-	const isOwner = service.provider.toString() === providerId.toString();
-	const isAdmin = requester?.role === 'admin';
-	if (!isOwner && !isAdmin)
-		throw new ForbiddenError('Not authorized to delete this service');
-
-	await service.deleteOne();
-	return { success: true };
-}
+};

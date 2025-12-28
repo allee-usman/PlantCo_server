@@ -11,10 +11,6 @@ const router = express.Router();
 router.use(isAuthenticated);
 
 // Customer routes
-router.post('/', orderController.createOrder);
-router.get('/my', orderController.getMyOrders);
-router.get('/:orderId', orderController.getOrderById);
-router.patch('/:orderId/cancel', orderController.cancelOrder);
 
 // Vendor/Admin routes
 router.patch(

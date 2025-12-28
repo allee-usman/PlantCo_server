@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import Product from '../models/product.model.js';
-import ErrorHandler from '../utils/ErrorHandler.js';
+import AppError from '../utils/AppError.js';
 import { buildQueryAndOptions } from '../utils/queryHelper.js';
 import {
 	deleteFromCloudinary,
@@ -313,14 +313,14 @@ export const updateProduct = async (
 	console.log('Update Data: ', updateData);
 
 	const product = await Product.findById(productId);
-	if (!product) throw new ErrorHandler('Product not found', 404);
+	if (!product) throw new AppError('Product not found', 404);
 
 	// Authorization: only admin or vendor who owns it
 	if (
 		user.role !== 'admin' &&
 		product.vendor.toString() !== user._id.toString()
 	) {
-		throw new ErrorHandler('Not authorized to update this product', 403);
+		throw new AppError('Not authorized to update this product', 403);
 	}
 
 	// Handle image deletions
@@ -367,13 +367,13 @@ export const updateProduct = async (
 // Delete Product
 export const deleteProduct = async (id, user) => {
 	const product = await Product.findById(id);
-	if (!product) throw new ErrorHandler('Product not found', 404);
+	if (!product) throw new AppError('Product not found', 404);
 
 	if (
 		user.role === 'vendor' &&
 		product.vendor.toString() !== user._id.toString()
 	) {
-		throw new ErrorHandler('Not authorized to delete this product', 403);
+		throw new AppError('Not authorized to delete this product', 403);
 	}
 
 	await Product.findByIdAndDelete(id);
@@ -386,7 +386,7 @@ export const updateProductStatus = async (id, status) => {
 		{ status },
 		{ new: true }
 	);
-	if (!product) throw new ErrorHandler('Product not found', 404);
+	if (!product) throw new AppError('Product not found', 404);
 	return product;
 };
 

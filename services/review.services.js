@@ -1,16 +1,16 @@
 import Review from '../models/review.model.js';
 import Product from '../models/product.model.js';
-import ErrorHandler from '../utils/ErrorHandler.js';
+import AppError from '../utils/AppError.js';
 
 // Create a new review
 // export const createReview = async (userId, productId, data) => {
 // 	const product = await Product.findById(productId);
-// 	if (!product) throw new ErrorHandler('Product not found', 404);
+// 	if (!product) throw new AppError('Product not found', 404);
 
 // 	// Prevent duplicate review by same user
 // 	const existing = await Review.findOne({ productId, customerId: userId });
 // 	if (existing)
-// 		throw new ErrorHandler('You already reviewed this product', 400);
+// 		throw new AppError('You already reviewed this product', 400);
 
 // 	const review = await Review.create({
 // 		productId,
@@ -114,7 +114,7 @@ export const updateReview = async (userId, reviewId, data) => {
 		data,
 		{ new: true }
 	);
-	if (!review) throw new ErrorHandler('Review not found or unauthorized', 404);
+	if (!review) throw new AppError('Review not found or unauthorized', 404);
 	return review;
 };
 
@@ -126,7 +126,7 @@ export const deleteReview = async (userId, reviewId) => {
 		_id: reviewId,
 		customerId: userId,
 	});
-	if (!review) throw new ErrorHandler('Review not found or unauthorized', 404);
+	if (!review) throw new AppError('Review not found or unauthorized', 404);
 	return true;
 };
 
@@ -135,7 +135,7 @@ export const deleteReview = async (userId, reviewId) => {
  */
 export const moderateReview = async (reviewId, data) => {
 	const review = await Review.findById(reviewId);
-	if (!review) throw new ErrorHandler('Review not found', 404);
+	if (!review) throw new AppError('Review not found', 404);
 
 	review.status = data.status;
 	review.moderationNote = data.note || '';

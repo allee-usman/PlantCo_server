@@ -49,6 +49,8 @@ const userSchema = new Schema(
 			}, // only required if not OAuth
 		},
 
+		name: { type: String, trim: true, maxlength: 50 },
+
 		role: {
 			type: String,
 			enum: ['customer', 'admin', 'vendor', 'service_provider'],
@@ -65,7 +67,7 @@ const userSchema = new Schema(
 			url: {
 				type: String,
 				default:
-					'https://res.cloudinary.com/dguvpd38e/image/upload/v1758573062/default-avatar_dngwhv.jpg', // fallback
+					'https://res.cloudinary.com/dguvpd38e/image/upload/v1765633233/default-avatar_rnzhkx.jpg', // fallback
 			},
 			public_id: {
 				type: String,
@@ -100,7 +102,6 @@ const userSchema = new Schema(
 
 		customerProfile: {
 			type: new Schema({
-				name: { type: String, trim: true, maxlength: 50 },
 				addresses: [addressSchema],
 				wishlist: [{ type: Schema.Types.ObjectId, ref: 'Product' }],
 				recentlyViewed: [
@@ -190,6 +191,19 @@ const userSchema = new Schema(
 					minlength: 3,
 					maxlength: 100,
 				},
+
+				slogan: {
+					type: String,
+					trim: true,
+					minlength: 10,
+					maxlength: 50,
+				},
+				description: {
+					type: String,
+					trim: true,
+					minlength: 100,
+					maxlength: 500,
+				},
 				// Geo location (for geospatial search). Keep businessLocation.address fields as-is.
 				businessLocation: {
 					address: addressSchema, // keep existing fields (if addressSchema is an object schema)
@@ -261,7 +275,7 @@ const userSchema = new Schema(
 					},
 					workingDays: [
 						{
-							type: String,
+							type: [String],
 							enum: [
 								'monday',
 								'tuesday',
@@ -317,6 +331,7 @@ const userSchema = new Schema(
 					averageRating: { type: Number, default: 0 },
 					totalReviews: { type: Number, default: 0 },
 					responseTime: { type: Number, default: 0 }, // average hours to respond
+					totalEarnings: { type: Number, default: 0 }, // average hours to respond
 					completionRate: {
 						type: Number,
 						default: 0,

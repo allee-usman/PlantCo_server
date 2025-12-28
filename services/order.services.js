@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import Order from '../models/order.model.js';
 import Product from '../models/product.model.js';
 import { User } from '../models/user.model.js';
-import ErrorHandler from '../utils/ErrorHandler.js';
+import AppError from '../utils/AppError.js';
 // import { sendEmail } from '../utils/email.js';  // if you want to send care instructions
 
 /**
@@ -160,7 +160,7 @@ export const cancelOrder = async (orderId, updatedBy) => {
 
 	// If not found or invalid
 	if (!order) {
-		throw new ErrorHandler(
+		throw new AppError(
 			'Order not found or cannot be cancelled after shipment/delivery',
 			400
 		);
@@ -173,12 +173,12 @@ export const cancelOrder = async (orderId, updatedBy) => {
 // export const cancelOrder = async (orderId, updatedBy) => {
 // 	const order = await Order.findById(orderId);
 // 	if (!order) {
-// 		throw new ErrorHandler('Order not found', 404);
+// 		throw new AppError('Order not found', 404);
 // 	}
 
 // 	// Manually check before update (no reliance on $nin)
 // 	if (['shipped', 'delivered', 'cancelled'].includes(order.status)) {
-// 		throw new ErrorHandler(
+// 		throw new AppError(
 // 			`Order cannot be cancelled because it is already ${order.status}`,
 // 			400
 // 		);
@@ -202,7 +202,7 @@ export const cancelOrder = async (orderId, updatedBy) => {
 // 	);
 
 // 	if (!updatedOrder) {
-// 		throw new ErrorHandler('Failed to cancel order', 400);
+// 		throw new AppError('Failed to cancel order', 400);
 // 	}
 
 // 	return updatedOrder;

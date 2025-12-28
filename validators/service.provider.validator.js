@@ -109,64 +109,68 @@ export const nearbyServiceProvidersSchema = z.object({
 // Update service provider profile
 export const updateServiceProviderProfileSchema = z.object({
 	body: z.object({
-		businessName: z.string().trim().min(3).max(100).optional(),
+		serviceProviderProfile: z.object({
+			businessName: z.string().trim().min(3).max(100).optional(),
 
-		serviceTypes: z.array(z.enum(SERVICE_TYPES)).min(1).optional(),
+			bio: z.string().trim().min(50).max(400).optional(),
 
-		serviceArea: z
-			.object({
-				radius: z.number().int().min(1).max(500).optional(),
-				unit: z.enum(['km', 'miles']).optional(),
-				cities: z.array(z.string().trim()).optional(),
-				states: z.array(z.string().trim()).optional(),
-			})
-			.optional(),
+			businessLocation: z
+				.object({
+					address: addressSchema.optional(),
+					coordinates: coordinatesSchema.optional(),
+				})
+				.optional(),
 
-		pricing: z
-			.object({
-				hourlyRate: z.number().min(0).optional(),
-				travelFee: z.number().min(0).optional(),
-			})
-			.optional(),
+			serviceTypes: z.array(z.enum(SERVICE_TYPES)).min(1).optional(),
 
-		availability: z
-			.object({
-				status: z.enum(['available', 'on_leave', 'busy']).optional(),
-				workingDays: z
-					.array(
-						z.enum([
-							'monday',
-							'tuesday',
-							'wednesday',
-							'thursday',
-							'friday',
-							'saturday',
-							'sunday',
-						])
-					)
-					.optional(),
-				workingHours: z
-					.object({
-						start: timeSchema.optional(),
-						end: timeSchema.optional(),
-					})
-					.optional(),
-			})
-			.optional(),
+			serviceArea: z
+				.object({
+					radius: z.number().min(1).max(500).optional(),
+					unit: z.enum(['km', 'miles']).optional(),
+					cities: z.array(z.string()).optional(),
+					states: z.array(z.string()).optional(),
+				})
+				.optional(),
 
-		experience: z
-			.object({
-				yearsInBusiness: z.number().int().min(0).optional(),
-				specializations: z.array(z.enum(SERVICE_TYPES)).optional(),
-			})
-			.optional(),
+			pricing: z
+				.object({
+					hourlyRate: z.number().min(0).optional(),
+					travelFee: z.number().min(0).optional(),
+				})
+				.optional(),
 
-		paymentDetails: z
-			.object({
-				stripeAccountId: z.string().optional(),
-				payeeName: z.string().trim().optional(),
-			})
-			.optional(),
+			availability: z
+				.object({
+					status: z.enum(['available', 'on_leave', 'busy']).optional(),
+					workingDays: z
+						.array(
+							z.enum([
+								'monday',
+								'tuesday',
+								'wednesday',
+								'thursday',
+								'friday',
+								'saturday',
+								'sunday',
+							])
+						)
+						.optional(),
+					workingHours: z
+						.object({
+							start: z.string().optional(),
+							end: z.string().optional(),
+						})
+						.optional(),
+				})
+				.optional(),
+
+			experience: z
+				.object({
+					yearsInBusiness: z.number().min(0).max(100).optional(),
+					specializations: z.array(z.enum(SERVICE_TYPES)).optional(),
+				})
+				.optional(),
+		}),
 	}),
 });
 
@@ -186,11 +190,14 @@ export const updateBusinessLocationSchema = z.object({
 // Add portfolio item
 export const addPortfolioItemSchema = z.object({
 	body: z.object({
-		title: z.string().trim().min(3).max(100),
-		description: z.string().trim().min(10).max(500),
-		images: z.array(z.string().url()).min(1).max(10),
+		title: z.string().max(100, 'Title too long').trim(),
+		description: z.string().max(500, 'Description too long').trim(),
+		images: z
+			.array(z.string().url())
+			.min(1, 'At least one image is required')
+			.max(10, 'Maximum 10 images allowed'),
 		serviceType: z.enum(SERVICE_TYPES),
-		completedDate: z.coerce.date().optional(),
+		completedDate: z.string().datetime().optional(),
 	}),
 });
 
@@ -200,10 +207,16 @@ export const updatePortfolioItemSchema = z.object({
 		portfolioId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid portfolio ID'),
 	}),
 	body: z.object({
-		title: z.string().trim().min(3).max(100).optional(),
-		description: z.string().trim().min(10).max(500).optional(),
+		title: z.string().max(100).trim().optional(),
+		description: z.string().max(500).trim().optional(),
 		images: z.array(z.string().url()).min(1).max(10).optional(),
 		serviceType: z.enum(SERVICE_TYPES).optional(),
-		completedDate: z.coerce.date().optional(),
+		completedDate: z.string().datetime().optional(),
+	}),
+});
+
+export const deletePortfolioItemSchema = z.object({
+	params: z.object({
+		portfolioId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid portfolio ID'),
 	}),
 });

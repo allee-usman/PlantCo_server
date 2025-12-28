@@ -1,8 +1,7 @@
 import { User } from '../models/user.model.js';
 import Order from '../models/order.model.js';
 import Product from '../models/product.model.js';
-import bcrypt from 'bcryptjs';
-import ErrorHandler from '../utils/ErrorHandler.js';
+import AppError from '../utils/AppError.js';
 import cloudinary from '../config/cloudinary.js';
 import * as otpService from './otp.services.js';
 
@@ -47,10 +46,10 @@ export const updateProfile = async (userId, data) => {
 
 // Upload avatar
 export const uploadAvatar = async (userId, file) => {
-	if (!file) throw new ErrorHandler('No picture uploaded', 400);
+	if (!file) throw new AppError('No picture uploaded', 400);
 
 	const user = await User.findById(userId);
-	if (!user) throw new ErrorHandler('User not found', 404);
+	if (!user) throw new AppError('User not found', 404);
 
 	// If user already has an avatar, remove from Cloudinary
 	if (user.avatar?.public_id) {
@@ -83,7 +82,7 @@ export const uploadAvatar = async (userId, file) => {
 // Delete avatar
 export const deleteAvatar = async (userId) => {
 	const user = await User.findById(userId);
-	if (!user) throw new ErrorHandler('User not found', 404);
+	if (!user) throw new AppError('User not found', 404);
 
 	// If avatar exists in cloudinary, delete it
 	if (user.avatar?.public_id) {
@@ -105,7 +104,7 @@ export const requestChangeEmail = async (userId, newEmail) => {
 	// 1. Make sure new email is not already used
 	const existingUser = await User.findOne({ email: newEmail });
 	if (existingUser) {
-		throw new ErrorHandler('Email already in use', 400);
+		throw new AppError('Email already in use', 400);
 	}
 
 	// 2. Create a unique OTP key (we tie it to user + new email)
@@ -137,7 +136,7 @@ export const getOrderById = async (userId, orderId) => {
 
 export const reorder = async (userId, orderId) => {
 	const oldOrder = await Order.findOne({ _id: orderId, user: userId });
-	if (!oldOrder) throw new ErrorHandler('Order not found', 404);
+	if (!oldOrder) throw new AppError('Order not found', 404);
 
 	const newOrder = new Order({
 		user: userId,
@@ -204,7 +203,7 @@ export const updateCartItem = async (userId, productId, quantity) => {
 	const user = await User.findById(userId);
 	const item = user.cart.find((i) => i.product.toString() === productId);
 
-	if (!item) throw new ErrorHandler('Product not found in cart', 404);
+	if (!item) throw new AppError('Product not found in cart', 404);
 
 	item.quantity = quantity;
 	await user.save();
@@ -227,12 +226,12 @@ export const clearCart = async (userId) => {
 // REVIEWS
 export const addReview = async (userId, productId, { rating, comment }) => {
 	const product = await Product.findById(productId);
-	if (!product) throw new ErrorHandler('Product not found', 404);
+	if (!product) throw new AppError('Product not found', 404);
 
 	const alreadyReviewed = product.reviews.find(
 		(rev) => rev.user.toString() === userId
 	);
-	if (alreadyReviewed) throw new ErrorHandler('Already reviewed', 400);
+	if (alreadyReviewed) throw new AppError('Already reviewed', 400);
 
 	const review = { user: userId, rating, comment };
 	product.reviews.push(review);
@@ -249,11 +248,11 @@ export const addReview = async (userId, productId, { rating, comment }) => {
 
 export const updateReview = async (userId, reviewId, { rating, comment }) => {
 	const product = await Product.findOne({ 'reviews._id': reviewId });
-	if (!product) throw new ErrorHandler('Review not found', 404);
+	if (!product) throw new AppError('Review not found', 404);
 
 	const review = product.reviews.id(reviewId);
 	if (review.user.toString() !== userId)
-		throw new ErrorHandler('Not authorized', 403);
+		throw new AppError('Not authorized', 403);
 
 	review.rating = rating ?? review.rating;
 	review.comment = comment ?? review.comment;
@@ -270,11 +269,11 @@ export const updateReview = async (userId, reviewId, { rating, comment }) => {
 
 export const deleteReview = async (userId, reviewId) => {
 	const product = await Product.findOne({ 'reviews._id': reviewId });
-	if (!product) throw new ErrorHandler('Review not found', 404);
+	if (!product) throw new AppError('Review not found', 404);
 
 	const review = product.reviews.id(reviewId);
 	if (review.user.toString() !== userId)
-		throw new ErrorHandler('Not authorized', 403);
+		throw new AppError('Not authorized', 403);
 
 	product.reviews.pull(reviewId);
 
@@ -292,19 +291,16 @@ export const deleteReview = async (userId, reviewId) => {
 // Change password
 export const changePassword = async (userId, currentPassword, newPassword) => {
 	const user = await User.findById(userId).select('+password');
-	if (!user) throw new ErrorHandler('User not found', 404);
+	if (!user) throw new AppError('User not found', 404);
 
 	// Verify current password
 	const isMatch = await user.comparePassword(currentPassword);
-	if (!isMatch) throw new ErrorHandler('Current password is incorrect', 401);
+	if (!isMatch) throw new AppError('Current password is incorrect', 401);
 
 	// Prevent reusing same password
 	const isSame = await user.comparePassword(newPassword);
 	if (isSame)
-		throw new ErrorHandler(
-			'New password must be different from old password',
-			400
-		);
+		throw new AppError('New password must be different from old password', 400);
 
 	// Update password
 	user.password = newPassword;
@@ -318,7 +314,7 @@ export const getNotificationSettings = async (userId) => {
 	const user = await User.findById(userId).select('notificationSettings');
 
 	if (!user) {
-		throw new ErrorHandler('User not found', 404);
+		throw new AppError('User not found', 404);
 	}
 
 	return user.notificationSettings;
@@ -336,7 +332,7 @@ export const updateNotificationSettings = async (
 	).select('notificationSettings');
 
 	if (!user) {
-		throw new ErrorHandler('User not found', 404);
+		throw new AppError('User not found', 404);
 	}
 
 	return user.notificationSettings;

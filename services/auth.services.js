@@ -1,6 +1,6 @@
 // services/auth.services.js
 import { User } from '../models/user.model.js';
-import ErrorHandler from '../utils/ErrorHandler.js';
+import AppError from '../utils/AppError.js';
 import { generateToken } from '../utils/auth.helpers.js';
 import {
 	createAndSendOTP,
@@ -19,16 +19,16 @@ export const signup = async (
 	const existingUser = await User.findOne({ email }).lean();
 	if (existingUser) {
 		if (!existingUser.isVerified) {
-			throw new ErrorHandler(
+			throw new AppError(
 				'User registered but not verified. Please login and verify.',
 				400
 			);
 		}
-		throw new ErrorHandler('Email already in use', 400);
+		throw new AppError('Email already in use', 400);
 	}
 	// Check if username already exists
 	const existingUsername = await User.findOne({ username }).lean();
-	if (existingUsername) throw new ErrorHandler('Username already taken', 400);
+	if (existingUsername) throw new AppError('Username already taken', 400);
 
 	const user = new User({
 		username,
@@ -57,7 +57,7 @@ export const verifyOTP = async (email, otp, context, newEmail, userId) => {
 		case 'signup': {
 			// email, otp, context, newEmail(null), userId(null)
 			const user = await User.findOne({ email });
-			if (!user) throw new ErrorHandler('User not found', 404);
+			if (!user) throw new AppError('User not found', 404);
 
 			await verifyOTPService({
 				key: `signup:${email}`,
@@ -87,7 +87,7 @@ export const verifyOTP = async (email, otp, context, newEmail, userId) => {
 		case 'change-email': {
 			// email(null), otp, context, newEmail, userId
 			if (!newEmail || !userId) {
-				throw new ErrorHandler('Missing new email or user id', 400);
+				throw new AppError('Missing new email or user id', 400);
 			}
 			const otpKey = `change-email:${userId}:${newEmail}`;
 			console.log('OTP key sending to verify: ', otpKey);
@@ -98,7 +98,7 @@ export const verifyOTP = async (email, otp, context, newEmail, userId) => {
 			});
 
 			if (!result.success) {
-				throw new ErrorHandler('OTP verification failed', 400);
+				throw new AppError('OTP verification failed', 400);
 			}
 			const updatedUser = await User.findByIdAndUpdate(
 				userId,
@@ -107,7 +107,7 @@ export const verifyOTP = async (email, otp, context, newEmail, userId) => {
 			);
 
 			if (!updatedUser) {
-				throw new ErrorHandler('User not found during email update', 404);
+				throw new AppError('User not found during email update', 404);
 			}
 
 			const token = generateToken(updatedUser._id.toString());
@@ -119,18 +119,18 @@ export const verifyOTP = async (email, otp, context, newEmail, userId) => {
 			};
 		}
 		default:
-			throw new ErrorHandler('Invalid OTP context', 400);
+			throw new AppError('Invalid OTP context', 400);
 	}
 };
 
 // Resend OTP
 export const resendOTP = async (email, context) => {
 	const user = await User.findOne({ email }).lean();
-	if (!user) throw new ErrorHandler('User not found', 404);
+	if (!user) throw new AppError('User not found', 404);
 
 	switch (context) {
 		case 'signup': {
-			if (user.isVerified) throw new ErrorHandler('User already verified', 400);
+			if (user.isVerified) throw new AppError('User already verified', 400);
 
 			return await createAndSendOTP({
 				key: `signup:${email}`,
@@ -147,7 +147,7 @@ export const resendOTP = async (email, context) => {
 		}
 
 		default:
-			throw new ErrorHandler('Invalid OTP context', 400);
+			throw new AppError('Invalid OTP context', 400);
 	}
 };
 
@@ -155,7 +155,7 @@ export const resendOTP = async (email, context) => {
 export const requestPasswordReset = async (email) => {
 	const user = await User.findOne({ email }).lean();
 	if (!user) {
-		throw new ErrorHandler(
+		throw new AppError(
 			'If an account exists for this email, you will receive a reset OTP.',
 			400
 		);
@@ -167,14 +167,11 @@ export const requestPasswordReset = async (email) => {
 // Reset Password
 export const resetPassword = async (email, newPassword) => {
 	const user = await User.findOne({ email });
-	if (!user) throw new ErrorHandler('User not found', 404);
+	if (!user) throw new AppError('User not found', 404);
 
 	const newPasswordMatch = await user.comparePassword(newPassword);
 	if (newPasswordMatch) {
-		throw new ErrorHandler(
-			'New password must be different from old password',
-			400
-		);
+		throw new AppError('New password must be different from old password', 400);
 	}
 
 	await checkVerifiedForReset(email);
@@ -191,10 +188,10 @@ export const login = async (emailOrUsername, password) => {
 	};
 
 	const user = await User.findOne(query).select('+passwordHash');
-	if (!user) throw new ErrorHandler('Invalid email or password', 401);
+	if (!user) throw new AppError('Invalid email or password', 401);
 
 	const ok = await user.comparePassword(password);
-	if (!ok) throw new ErrorHandler('Invalid email or password', 401);
+	if (!ok) throw new AppError('Invalid email or password', 401);
 
 	if (!user.isVerified) {
 		// user will be passed through toJSON automatically

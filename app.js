@@ -1,28 +1,28 @@
 import express from 'express';
 import cors from 'cors';
 import errorHandler from './middlewares/error.handler.js';
-import ErrorHandler from './utils/ErrorHandler.js';
 
 // Import route files
 import AuthRoutes from './routes/auth.routes.js';
+import userRoutes from './routes/user.routes.js';
+import CustomerRoutes from './routes/customer.routes.js';
+import ProviderRoutes from './routes/provider.routes.js';
+import ServiceRoutes from './routes/services.routes.js';
+// import VendorRoutes from './routes/vendor.routes.js';
 import addressRoutes from './routes/address.routes.js';
 import reviewRoutes from './routes/review.routes.js';
-import userRoutes from './routes/user.routes.js';
 import categoryRoutes from './routes/category.routes.js';
 import productRoutes from './routes/product.routes.js';
 import orderRoutes from './routes/order.routes.js';
 import bannerRoutes from './routes/banner.routes.js';
-// import amdminRoutes from './routes/review.routes.js';
 import plantRecognition from './routes/plant.recognition.routes.js';
-import wishlist from './routes/user.products.routes.js';
 import bookingsRouter from './routes/booking.routes.js';
 import servicesRouter from './routes/services.routes.js';
-import cartRoutes from './routes/cart.routes.js';
-import serviceProviderRouter from './routes/service.provider.routes.js';
 
 import morgan from 'morgan';
 import logger from './utils/logger.js';
 import { requestLogger } from './middlewares/request.logger.js';
+import AppError from './utils/AppError.js';
 
 const app = express();
 
@@ -79,25 +79,25 @@ app.get('/health', (req, res) => {
 
 // route middlewares - API routes
 app.use('/api/auth', AuthRoutes);
-app.use('/api/addresses', addressRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/customers', CustomerRoutes);
+app.use('/api/providers', ProviderRoutes);
+app.use('/api/service', ServiceRoutes);
+// // app.use('/api/vendor', VendorRoutes);
+app.use('/api/addresses', addressRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/banners', bannerRoutes);
-// app.use('/api/admin', amdminRoutes);
 app.use('/api/ai', plantRecognition);
-app.use('/api/user/', wishlist);
 app.use('/api/bookings', bookingsRouter);
 app.use('/api/services', servicesRouter);
-app.use('/api/cart', cartRoutes);
-app.use('/api/service-providers', serviceProviderRouter);
 
 // 404 handler
 app.all(/.*/, (req, res, next) => {
 	const path = req.path || req.originalUrl || 'unknown path';
-	next(new ErrorHandler(`Can't find ${path} on this server`, 404));
+	next(new AppError(`Can't find ${path} on this server`, 404));
 });
 
 // app.all('*', (req, res) => {

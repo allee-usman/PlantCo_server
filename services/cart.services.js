@@ -1,7 +1,7 @@
 // services/cart.services.js
 import Cart from '../models/cart.model.js';
 import Product from '../models/product.model.js';
-import ErrorHandler from '../utils/errorHandler.js';
+import AppError from '../utils/AppError.js';
 import mongoose from 'mongoose';
 
 function getInventory(product) {
@@ -54,7 +54,7 @@ class CartService {
 		// Verify product exists
 		const product = await Product.findById(productId);
 		if (!product) {
-			throw new ErrorHandler('Product not found', 404);
+			throw new AppError('Product not found', 404);
 		}
 
 		// Check stock availability
@@ -64,7 +64,7 @@ class CartService {
 			!inventory.allowBackorder &&
 			inventory.quantity < quantity
 		) {
-			throw new ErrorHandler(`Only ${inventory.quantity} items available`, 400);
+			throw new AppError(`Only ${inventory.quantity} items available`, 400);
 		}
 
 		// Get or create cart (not lean, because we will save)
@@ -94,7 +94,7 @@ class CartService {
 				!inventory.allowBackorder &&
 				inventory.quantity < newQuantity
 			) {
-				throw new ErrorHandler(
+				throw new AppError(
 					`Cannot add more. Only ${inventory.quantity} items available`,
 					400
 				);
@@ -141,7 +141,7 @@ class CartService {
 	async updateCartItem(userId, itemId, quantity) {
 		const cart = await Cart.findOne({ userId });
 		if (!cart) {
-			throw new ErrorHandler('Cart not found', 404);
+			throw new AppError('Cart not found', 404);
 		}
 
 		// Find by cart-item _id robustly
@@ -151,7 +151,7 @@ class CartService {
 		});
 
 		if (itemIndex === -1) {
-			throw new ErrorHandler('Item not found in cart', 404);
+			throw new AppError('Item not found in cart', 404);
 		}
 
 		// Resolve productId from the cart item for stock checks
@@ -172,7 +172,7 @@ class CartService {
 			!inventory.allowBackorder &&
 			inventory.quantity < quantity
 		) {
-			throw new ErrorHandler(
+			throw new AppError(
 				`Only ${inventory.quantity} items available in stock`,
 				400
 			);
@@ -195,7 +195,7 @@ class CartService {
 	async removeFromCart(userId, itemId) {
 		const cart = await Cart.findOne({ userId });
 		if (!cart) {
-			throw new ErrorHandler('Cart not found', 404);
+			throw new AppError('Cart not found', 404);
 		}
 
 		const itemIndex = cart.items.findIndex((item) => {
@@ -204,7 +204,7 @@ class CartService {
 		});
 
 		if (itemIndex === -1) {
-			throw new ErrorHandler('Item not found in cart', 404);
+			throw new AppError('Item not found in cart', 404);
 		}
 
 		cart.items.splice(itemIndex, 1);
@@ -219,7 +219,7 @@ class CartService {
 	async clearCart(userId) {
 		const cart = await Cart.findOne({ userId });
 		if (!cart) {
-			throw new ErrorHandler('Cart not found', 404);
+			throw new AppError('Cart not found', 404);
 		}
 
 		cart.items = [];
@@ -235,7 +235,7 @@ class CartService {
 		const products = await Product.find({ _id: { $in: productIds } });
 
 		if (products.length !== items.length) {
-			throw new ErrorHandler('One or more products not found', 404);
+			throw new AppError('One or more products not found', 404);
 		}
 
 		let cart = await Cart.findOne({ userId });
@@ -253,7 +253,7 @@ class CartService {
 				!inventory.allowBackorder &&
 				inventory.quantity < item.quantity
 			) {
-				throw new ErrorHandler(
+				throw new AppError(
 					`${product.name}: Only ${inventory.quantity} items available`,
 					400
 				);
@@ -306,7 +306,7 @@ class CartService {
 	 */
 	async syncCart(userId) {
 		const cart = await Cart.findOne({ userId });
-		if (!cart) throw new ErrorHandler('Cart not found', 404);
+		if (!cart) throw new AppError('Cart not found', 404);
 
 		const productIds = cart.items
 			.map((i) => {

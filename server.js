@@ -4,8 +4,6 @@ import dotenv from 'dotenv';
 import { connectMongoDB } from './config/db.config.js';
 import redisClient, { ensureRedisConnection } from './config/redis.config.js';
 
-dotenv.config();
-
 const requiredEnvVars = [
 	'JWT_SECRET',
 	'MONGODB_URI',

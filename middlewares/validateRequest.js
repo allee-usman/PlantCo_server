@@ -16,6 +16,8 @@ import { ZodError } from 'zod';
  */
 export default function validateRequest(schema) {
 	return async function (req, res, next) {
+		// console.log('Recived req.body', req.body);
+
 		try {
 			// Validate the entire request object
 			const validated = await schema.parseAsync({
@@ -29,12 +31,18 @@ export default function validateRequest(schema) {
 
 			return next();
 		} catch (err) {
-			// Mark ZodError so your global error handler can detect and format
 			if (err instanceof ZodError) {
-				err.name = 'ZodError';
-				// You can optionally add a `statusCode` or transform here:
+				console.log(
+					'ZOD ERRORS:',
+					err.issues.map((e) => ({
+						path: e.path.join('.'),
+						message: e.message,
+					}))
+				);
+
 				err.statusCode = 400;
 			}
+
 			return next(err);
 		}
 	};

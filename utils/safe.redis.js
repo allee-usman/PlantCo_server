@@ -1,5 +1,5 @@
 import redis from '../config/redis.config.js';
-import ErrorHandler from './ErrorHandler.js';
+import AppError from './AppError.js';
 
 export const safeRedis = {
 	async get(key) {
@@ -7,7 +7,7 @@ export const safeRedis = {
 			return await redis.get(key);
 		} catch (err) {
 			console.error('Redis GET error', key, err);
-			throw new ErrorHandler('Internal storage error', 500);
+			throw new AppError('Internal storage error', 500);
 		}
 	},
 
@@ -16,7 +16,7 @@ export const safeRedis = {
 			return await redis.set(key, value, ...args);
 		} catch (err) {
 			console.error('Redis SET error', key, err);
-			throw new ErrorHandler('Internal storage error', 500);
+			throw new AppError('Internal storage error', 500);
 		}
 	},
 
@@ -34,7 +34,7 @@ export const safeRedis = {
 			return await redis.incr(key);
 		} catch (err) {
 			console.error('Redis INCR error', key, err);
-			throw new ErrorHandler('Internal storage error', 500);
+			throw new AppError('Internal storage error', 500);
 		}
 	},
 

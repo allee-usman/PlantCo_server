@@ -1,5 +1,5 @@
 import { User } from '../models/user.model.js';
-import ErrorHandler from '../utils/ErrorHandler.js';
+import AppError from '../utils/AppError.js';
 import redis from '../config/redis.config.js';
 /**
  * Fetch all users with pagination + filtering (role, status)
@@ -26,7 +26,7 @@ export const getAllUsersService = async (query) => {
  */
 export const getUserByIdService = async (userId) => {
 	const user = await User.findById(userId).select('-password');
-	if (!user) throw new ErrorHandler('User not found', 404);
+	if (!user) throw new AppError('User not found', 404);
 	return user;
 };
 
@@ -36,11 +36,11 @@ export const getUserByIdService = async (userId) => {
 export const updateUserRoleService = async (userId, newRole) => {
 	const validRoles = ['user', 'vendor', 'admin'];
 	if (!validRoles.includes(newRole)) {
-		throw new ErrorHandler('Invalid role specified', 400);
+		throw new AppError('Invalid role specified', 400);
 	}
 
 	const user = await User.findById(userId);
-	if (!user) throw new ErrorHandler('User not found', 404);
+	if (!user) throw new AppError('User not found', 404);
 
 	user.role = newRole;
 	await user.save();
@@ -53,7 +53,7 @@ export const updateUserRoleService = async (userId, newRole) => {
  */
 export const toggleBlockUserService = async (userId, block = true) => {
 	const user = await User.findById(userId);
-	if (!user) throw new ErrorHandler('User not found', 404);
+	if (!user) throw new AppError('User not found', 404);
 
 	user.isBlocked = block; // ✅ add isBlocked field in schema
 	await user.save();
@@ -66,7 +66,7 @@ export const toggleBlockUserService = async (userId, block = true) => {
  */
 export const deleteUserService = async (userId) => {
 	const user = await User.findById(userId);
-	if (!user) throw new ErrorHandler('User not found', 404);
+	if (!user) throw new AppError('User not found', 404);
 
 	await user.deleteOne();
 	return { message: 'User deleted successfully' };
@@ -82,6 +82,6 @@ export const resetRedisData = async () => {
 		return { success: true, message: 'All Redis data has been reset.' };
 	} catch (error) {
 		console.error('Failed to reset Redis data:', error);
-		throw new ErrorHandler('Failed to reset Redis data', 500);
+		throw new AppError('Failed to reset Redis data', 500);
 	}
 };

@@ -1,66 +1,52 @@
+// routes/user.routes.js
 import express from 'express';
 import { isAuthenticated } from '../middlewares/auth.middlewares.js';
-import * as userController from '../controllers/user.controller.js';
+import * as userAccountController from '../controllers/user/account.controller.js';
+import * as userNotificationController from '../controllers/user/notification.controller.js';
+import * as userProfileController from '../controllers/user/profile.controller.js';
+import * as userSecController from '../controllers/user/security.controller.js';
 import { uploadSingleImage } from '../middlewares/upload.middleware.js';
+import validateRequest from '../middlewares/validateRequest.js';
+import { updateProfileSchema } from '../validators/user.validator.js';
 
 const router = express.Router();
 
-// Apply auth middleware to all user routes
 router.use(isAuthenticated);
 
 // Profile
-router.get('/profile', userController.getProfile);
-router.put('/profile', userController.updateProfile);
+router.get('/me', userProfileController.getMyProfile);
 router.put(
-	'/profile/avatar',
+	'/me',
+	validateRequest(updateProfileSchema),
+	userProfileController.updateMyProfile
+);
+
+// Avatar
+router.put(
+	'/me/avatar',
 	uploadSingleImage('avatar'),
-	userController.uploadAvatar
+	userProfileController.uploadAvatar
 );
-router.delete('/profile/avatar', userController.deleteAvatar);
+router.delete('/me/avatar', userProfileController.deleteAvatar);
 
-// Orders
-router.get('/orders', userController.getUserOrders);
-router.get('/orders/:orderId', userController.getOrderById);
-router.post('/orders/:orderId/reorder', userController.reorder);
+// Security
+router.put('/me/change-password', userSecController.changePassword);
 
-// Wishlist
-router.get('/wishlist', userController.getWishlist);
-router.post('/wishlist/:productId', userController.addToWishlist);
-router.delete('/wishlist/:productId', userController.removeFromWishlist);
-router.delete('/wishlist', userController.clearWishlist);
+// Email change
+router.post('/me/change-email/request', userSecController.requestEmailChange);
+router.post('/me/change-email/verify', userSecController.verifyEmailChange);
 
-// Cart
-router.get('/cart', userController.getCart);
-router.post('/cart/:productId', userController.addToCart);
-router.put('/cart/:productId', userController.updateCartItem);
-router.delete('/cart/:productId', userController.removeFromCart);
-router.delete('/cart', userController.clearCart);
-
-// Reviews
-router.post('/reviews/:productId', userController.addReview);
-router.put('/reviews/:reviewId', userController.updateReview);
-router.delete('/reviews/:reviewId', userController.deleteReview);
-
-// Settings
-// Change Password (for logged-in users)
-router.put('/change-password', userController.changePassword);
-
-// Email change flow
-router.post('/change-email/request', userController.requestEmailChange);
-router.post('/change-email/verify', userController.verifyEmailChange);
-
-//  notifications
-router.put(
-	'/settings/notifications',
-	userController.updateNotificationSettings
-);
-
+// Notifications
 router.get(
-	'/settings/notifications',
-	isAuthenticated,
-	userController.getNotificationSettings
+	'/me/notifications',
+	userNotificationController.getNotificationSettings
+);
+router.put(
+	'/me/notifications',
+	userNotificationController.updateNotificationSettings
 );
 
-router.delete('/delete-account', userController.deleteAccount);
+// Account
+router.delete('/me', userAccountController.deleteAccount);
 
 export default router;

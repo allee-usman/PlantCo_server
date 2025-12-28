@@ -1,7 +1,7 @@
 // controllers/auth.controller.js
 import { catchAsyncError } from '../middlewares/catchAsyncError.js';
-import ErrorHandler from '../utils/ErrorHandler.js';
 import * as authServices from '../services/auth.services.js';
+import AppError from '../utils/AppError.js';
 
 // Register
 export const signup = catchAsyncError(async (req, res) => {
@@ -49,7 +49,7 @@ export const requestPasswordReset = catchAsyncError(async (req, res) => {
 export const resetPassword = catchAsyncError(async (req, res) => {
 	const { email, newPassword } = req.validated.body || req.body;
 	if (!email || !newPassword) {
-		throw new ErrorHandler('Missing email or new password', 400);
+		throw new AppError('Missing email or new password', 400);
 	}
 
 	const response = await authServices.resetPassword(email, newPassword);

@@ -47,7 +47,6 @@ const CartSchema = new Schema(
 			type: Schema.Types.ObjectId,
 			ref: 'User',
 			required: true, // make false for guest carts if supported
-			unique: true,
 		},
 		// sessionId: { type: String, required: false }, // optional guest identifier
 		items: [cartItemSchema],

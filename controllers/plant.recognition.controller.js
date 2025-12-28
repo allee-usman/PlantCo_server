@@ -1,9 +1,10 @@
 import { catchAsyncError } from '../middlewares/catchAsyncError.js';
 import * as aiService from '../services/plant.recognition.services.js';
 import * as productService from '../services/product.services.js';
+import AppError from '../utils/AppError.js';
 
 export const identifyPlant = catchAsyncError(async (req, res) => {
-	if (!req.file) throw new ErrorHandler('No image provided', 400);
+	if (!req.file) throw new AppError('No image provided', 400);
 
 	// Upload image to Cloudinary
 	const uploadResult = await uploadToCloudinary(req.file.path);

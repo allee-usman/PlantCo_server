@@ -1,6 +1,6 @@
 // services/otp.service.js
 import { safeRedis } from '../utils/safe.redis.js';
-import ErrorHandler from '../utils/ErrorHandler.js';
+import AppError from '../utils/AppError.js';
 import { sendEmail } from '../mail/send.email.js';
 import { generateOTPTemplate } from '../mail/templates/otp.template.js';
 import { generateOTP } from '../utils/auth.helpers.js';
@@ -26,7 +26,7 @@ export const createAndSendOTP = async ({ key, recipient }) => {
 
 	const cooldownTTL = await safeRedis.ttl(cooldownKey);
 	if (cooldownTTL > 0) {
-		throw new ErrorHandler(
+		throw new AppError(
 			`Please wait ${cooldownTTL} seconds before requesting another OTP`,
 			429
 		);
@@ -34,7 +34,7 @@ export const createAndSendOTP = async ({ key, recipient }) => {
 
 	const attempts = await safeRedis.get(resendAttemptsKey);
 	if (attempts && parseInt(attempts, 10) >= MAX_RESEND_ATTEMPTS) {
-		throw new ErrorHandler('Maximum OTP resend attempts reached', 429);
+		throw new AppError('Maximum OTP resend attempts reached', 429);
 	}
 
 	const otp = generateOTP();
@@ -61,16 +61,16 @@ export const verifyOTP = async ({ key, inputOtp, expectedRecipient }) => {
 	const verifyAttemptsKey = getVerifyAttemptsKey(key);
 
 	const storedOtp = await safeRedis.get(otpKey);
-	if (!storedOtp) throw new ErrorHandler('OTP expired or not found', 400);
+	if (!storedOtp) throw new AppError('OTP expired or not found', 400);
 
 	if (storedOtp !== inputOtp) {
 		const attempts = await safeRedis.incr(verifyAttemptsKey);
 		if (attempts >= MAX_VERIFY_ATTEMPTS) {
 			await safeRedis.del(otpKey);
-			throw new ErrorHandler('Too many invalid attempts. OTP expired.', 429);
+			throw new AppError('Too many invalid attempts. OTP expired.', 429);
 		}
 		await safeRedis.expire(verifyAttemptsKey, OTP_TTL_SEC);
-		throw new ErrorHandler('Invalid OTP', 400);
+		throw new AppError('Invalid OTP', 400);
 	}
 
 	await safeRedis.del(otpKey);
@@ -91,7 +91,7 @@ export const verifyOTP = async ({ key, inputOtp, expectedRecipient }) => {
 export const checkVerifiedForReset = async (email) => {
 	const status = await safeRedis.get(getResetKey(email));
 	if (status !== 'verified') {
-		throw new ErrorHandler('OTP not verified or expired', 400);
+		throw new AppError('OTP not verified or expired', 400);
 	}
 	await safeRedis.del(getResetKey(email));
 };

@@ -6,9 +6,9 @@ import {
 	updateProductSchema,
 	statusUpdateSchema,
 } from '../validators/product.validation.js';
-import ErrorHandler from '../utils/ErrorHandler.js';
 import { normalizeProductFormData } from '../utils/normalizeProductFormData.js';
 import { uploadProductImages } from '../utils/image.helper.js';
+import AppError from '../utils/AppError.js';
 
 export const removeUndefined = (obj) => {
 	if (Array.isArray(obj)) {
@@ -48,7 +48,7 @@ export const getFacets = catchAsyncError(async (req, res, next) => {
 // create new product
 // export const createProduct = catchAsyncError(async (req, res) => {
 // 	if (!req.files || req.files.length === 0)
-// 		throw new ErrorHandler('At least one product image is required', 400);
+// 		throw new AppError('At least one product image is required', 400);
 
 // 	let images = [];
 
@@ -94,7 +94,7 @@ export const getFacets = catchAsyncError(async (req, res, next) => {
 export const createProduct = catchAsyncError(async (req, res) => {
 	// Ensure at least one image is provided
 	if (!req.files || req.files.length === 0) {
-		throw new ErrorHandler('At least one product image is required', 400);
+		throw new AppError('At least one product image is required', 400);
 	}
 	// Normalize and validate fields
 	const normalizedBody = normalizeProductFormData(req.body, []);

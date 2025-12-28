@@ -1,12 +1,12 @@
 // services/notification.service.js
 import { sendEmail } from '../mail/send.email.js';
 import User from '../models/user.model.js';
-import ErrorHandler from '../utils/ErrorHandler.js';
+import AppError from '../utils/AppError.js';
 
 export const sendUserEmail = async (userId, type, subject, htmlTemplate) => {
 	const user = await User.findById(userId).select('email notifications');
 
-	if (!user) throw new ErrorHandler('User not found', 404);
+	if (!user) throw new AppError('User not found', 404);
 
 	const { notifications } = user;
 

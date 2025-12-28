@@ -18,14 +18,11 @@ const ReviewSchema = new Schema(
 			// not required anymore, we'll validate at least one target present
 		},
 
-		serviceProviderId: {
+		providerId: {
 			type: Schema.Types.ObjectId,
 			ref: 'User',
 			index: true,
 		},
-
-		// optionally link to a booking (if you want to track which job this review relates to)
-		serviceBookingId: { type: Schema.Types.ObjectId, ref: 'ServiceBooking' },
 
 		customerId: {
 			type: Schema.Types.ObjectId,
@@ -34,18 +31,22 @@ const ReviewSchema = new Schema(
 			index: true,
 		},
 
+		customer: {
+			name: { type: String, required: true, trim: true },
+			verified: { type: Boolean, default: false },
+		},
+
 		orderId: { type: Schema.Types.ObjectId, ref: 'Order' },
+		// optionally link to a booking (if you want to track which job this review relates to)
+		bookingId: { type: Schema.Types.ObjectId, ref: 'ServiceBooking' },
+
+		serviceType: { type: String, required: true },
 
 		rating: { type: Number, required: true, min: 1, max: 5 },
 		title: { type: String, trim: true, maxlength: 100 },
 		comment: { type: String, required: true, trim: true, maxlength: 2000 },
 
 		images: [ReviewImageSchema],
-
-		customer: {
-			name: { type: String, required: true, trim: true },
-			verified: { type: Boolean, default: false },
-		},
 
 		status: {
 			type: String,

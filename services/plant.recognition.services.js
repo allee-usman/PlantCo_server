@@ -1,5 +1,5 @@
 // import axios from 'axios';
-// import ErrorHandler from '../utils/ErrorHandler';
+// import AppError from '../utils/AppError';
 
 const PLANT_API_URL =
 	process.env.PLANT_ID_API_URL || 'https://api.plant.id/v2/identify';
@@ -27,7 +27,7 @@ const PLANT_API_KEY = process.env.PLANT_ID_API_KEY || '';
 // 		);
 // 		return response.data.suggestions || [];
 // 	} catch (error) {
-// 		throw new ErrorHandler('Failed to identify plant', 500);
+// 		throw new AppError('Failed to identify plant', 500);
 // 	}
 
 // 	// let suggestions = [];

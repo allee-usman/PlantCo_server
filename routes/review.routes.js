@@ -11,27 +11,6 @@ const router = express.Router();
 
 /**
  * -------------------------
- * CUSTOMER ACTIONS
- * -------------------------
- */
-
-// Add or update a review for a product
-// Note: Single endpoint covers both "add" and "update" by the same user
-router.post(
-	'/:productId',
-	isAuthenticated,
-	authorizeRoles('customer'), //only customer can add review
-	reviewController.addOrUpdateReview
-);
-
-// Update a review by reviewId (only owner can update)
-router.put('/:reviewId', isAuthenticated, reviewController.updateReview);
-
-// Delete a review by reviewId (only owner can delete)
-router.delete('/:reviewId', isAuthenticated, reviewController.deleteReview);
-
-/**
- * -------------------------
  * VENDOR / ADMIN ACTIONS
  * -------------------------
  */
@@ -74,5 +53,30 @@ router.patch(
 	isAuthenticated,
 	reviewController.updateReviewStatus
 );
+
+/*
+1. GET /:userId/reviews/recent?limit={limit}
+Get recent customer reviews.
+Note: What if we also store recent reviews direclty into user profile?
+
+Query Parameters:
+limit: Number of reviews to return (default: 3)
+
+Response:
+[
+  {
+    "id": "review_123",
+    "customer": "Sarah Johnson",
+    "rating": 5,
+    "comment": "Excellent service! Very professional and thorough.",
+    "date": "2024-01-10",
+    "serviceType": "Lawn Mowing",
+    "reply": null,
+    "bookingId": "booking_456"
+  }
+]
+
+
+*/
 
 export default router;

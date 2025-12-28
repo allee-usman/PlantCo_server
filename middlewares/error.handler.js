@@ -1,7 +1,7 @@
 // middlewares/error.handler.js
 import multer from 'multer';
 import PrettyError from 'pretty-error';
-import ErrorHandler from '../utils/ErrorHandler.js';
+import AppError from '../utils/AppError.js';
 import logger from '../utils/logger.js';
 
 const pe = new PrettyError();
@@ -9,7 +9,7 @@ const pe = new PrettyError();
 const errorHandler = (err, req, res, next) => {
 	const isDev = process.env.NODE_ENV === 'development';
 
-	// keep original error for inspection, but unify into our ErrorHandler instance later
+	// keep original error for inspection, but unify into our AppError instance later
 	let error = err;
 
 	// 1️⃣ Multer errors
@@ -40,9 +40,9 @@ const errorHandler = (err, req, res, next) => {
 		});
 	}
 
-	// 2️⃣ Normalize to ErrorHandler if not already
-	if (!(error instanceof ErrorHandler)) {
-		error = new ErrorHandler(
+	// 2️⃣ Normalize to AppError if not already
+	if (!(error instanceof AppError)) {
+		error = new AppError(
 			error.message || 'Internal Server Error',
 			error.statusCode || 500,
 			false
@@ -51,20 +51,20 @@ const errorHandler = (err, req, res, next) => {
 
 	// 3️⃣ Known error cases (mutate `error`)
 	if (err?.name === 'CastError') {
-		error = new ErrorHandler(`Invalid ${err.path}: ${err.value}`, 400);
+		error = new AppError(`Invalid ${err.path}: ${err.value}`, 400);
 	}
 
 	if (err?.name === 'JsonWebTokenError') {
-		error = new ErrorHandler('Invalid authentication token', 401);
+		error = new AppError('Invalid authentication token', 401);
 	}
 
 	if (err?.name === 'TokenExpiredError') {
-		error = new ErrorHandler('Authentication token has expired', 401);
+		error = new AppError('Authentication token has expired', 401);
 	}
 
 	if (err?.name === 'ValidationError') {
 		const errors = Object.values(err.errors || {}).map((e) => e.message);
-		error = new ErrorHandler(`Validation Error: ${errors.join(', ')}`, 400);
+		error = new AppError(`Validation Error: ${errors.join(', ')}`, 400);
 	}
 
 	if (err?.name === 'ZodError') {
@@ -94,22 +94,22 @@ const errorHandler = (err, req, res, next) => {
 	if (err?.code === 11000) {
 		const field = Object.keys(err.keyValue || {})[0] || 'field';
 		const value = err.keyValue ? err.keyValue[field] : '';
-		error = new ErrorHandler(`${field} '${value}' already exists`, 409);
+		error = new AppError(`${field} '${value}' already exists`, 409);
 	}
 
 	if (err?.message?.includes('MaxRetriesPerRequestError')) {
-		error = new ErrorHandler('Temporary Redis issue. Please retry.', 503);
+		error = new AppError('Temporary Redis issue. Please retry.', 503);
 	}
 
 	if (
 		err?.message?.includes('getaddrinfo ENOTFOUND') ||
 		err?.code === 'ECONNREFUSED'
 	) {
-		error = new ErrorHandler('Cannot reach Redis. Try again later.', 503);
+		error = new AppError('Cannot reach Redis. Try again later.', 503);
 	}
 
 	if (err?.message && err.message.includes('Redis')) {
-		error = new ErrorHandler('Redis Service temporarily unavailable', 503);
+		error = new AppError('Redis Service temporarily unavailable', 503);
 	}
 
 	if (error.statusCode === 429) {
