@@ -3,20 +3,24 @@ import express from 'express'
 import {
     healthCheck,
     identifyPlant,
-    getHistory,
+    getPredictionHistory,
     deleteHistory,
     getPlants,
     getPlantInfo,
     getStats
 } from '../controllers/prediction.controller.js';
+import { uploadSingleImage } from '../middlewares/upload.middleware.js';
+import { isAuthenticated } from '../middlewares/auth.middlewares.js';
 
 const router = express.Router();
 
+// router.use(isAuthenticated)
+
 router.get('/', healthCheck);
 
-router.post('/identify', upload.single('image'), identifyPlant);
+router.post('/identify', uploadSingleImage('image'), identifyPlant);
 
-router.get('/history', getHistory);
+router.get('/history', getPredictionHistory);
 router.delete('/history/:id', deleteHistory);
 
 router.get('/plants', getPlants);

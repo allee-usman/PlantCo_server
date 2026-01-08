@@ -1,24 +1,25 @@
-
 import mongoose from 'mongoose';
 import catchAsyncError from '../middlewares/catchAsyncError.js';
+
 import {
   getPredictionFromFlask,
-  getPlants,
+  getPlants as fetchPlants,
   getPlantByName
 } from '../services/flask.services.js';
 
-
 import {
   savePrediction,
-  getHistory,
+  getHistory as fetchHistory,
   deletePrediction,
-  getStats
+  getStats as fetchStats
 } from '../services/prediction.services.js';
+
 import { checkFlaskAPI } from '../utils/health.util.js';
 
-
 const FLASK_API_URL = process.env.FLASK_API_URL;
+// console.log(FLASK_API_URL);
 
+/* ===================== HEALTH CHECK ===================== */
 export const healthCheck = catchAsyncError(async (req, res) => {
   const flaskHealthy = await checkFlaskAPI(FLASK_API_URL);
 
@@ -29,14 +30,19 @@ export const healthCheck = catchAsyncError(async (req, res) => {
     services: {
       backend: 'healthy',
       flask_api: flaskHealthy ? 'healthy' : 'unhealthy',
-      database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+      database:
+        mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
     }
   });
 });
 
-export const identifyPlant = catchAsync(async (req, res) => {
+/* ===================== IDENTIFY PLANT ===================== */
+export const identifyPlant = catchAsyncError(async (req, res) => {
   if (!req.file) {
-    return res.status(400).json({ success: false, error: 'No image uploaded' });
+    return res.status(400).json({
+      success: false,
+      error: 'No image uploaded'
+    });
   }
 
   const predictionData = await getPredictionFromFlask(
@@ -56,22 +62,31 @@ export const identifyPlant = catchAsync(async (req, res) => {
   res.json(predictionData);
 });
 
-export const getHistory = catchAsync(async (req, res) => {
-  if (mongoose.connection.readyState !== 1)
-    return res.status(503).json({ success: false, error: 'DB not connected' });
+/* ===================== HISTORY ===================== */
+export const getPredictionHistory = catchAsyncError(async (req, res) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      success: false,
+      error: 'DB not connected'
+    });
+  }
 
   const { userId, limit = 20, skip = 0 } = req.query;
 
-  const predictions = await getHistory(
+  const predictions = await fetchHistory(
     userId ? { userId } : {},
     parseInt(limit),
     parseInt(skip)
   );
 
-  res.json({ success: true, count: predictions.length, predictions });
+  res.json({
+    success: true,
+    count: predictions.length,
+    predictions
+  });
 });
 
-export const deleteHistory = catchAsync(async (req, res) => {
+export const deleteHistory = catchAsyncError(async (req, res) => {
   await deletePrediction(req.params.id);
 
   res.json({
@@ -80,17 +95,22 @@ export const deleteHistory = catchAsync(async (req, res) => {
   });
 });
 
-export const getPlants = catchAsync(async (req, res) => {
-  const data = await getPlants(FLASK_API_URL);
+/* ===================== PLANTS ===================== */
+export const getPlants = catchAsyncError(async (req, res) => {
+  const data = await fetchPlants(FLASK_API_URL);
   res.json(data);
 });
 
-export const getPlantInfo = catchAsync(async (req, res) => {
-  const data = await getPlantByName(FLASK_API_URL, req.params.plantName);
+export const getPlantInfo = catchAsyncError(async (req, res) => {
+  const data = await getPlantByName(
+    FLASK_API_URL,
+    req.params.plantName
+  );
   res.json(data);
 });
 
-export const getStats = catchAsync(async (req, res) => {
-  const stats = await getStats();
+/* ===================== STATS ===================== */
+export const getStats = catchAsyncError(async (req, res) => {
+  const stats = await fetchStats();
   res.json({ success: true, stats });
 });

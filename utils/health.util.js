@@ -3,6 +3,7 @@ import axios from 'axios'
 async function checkFlaskAPI(url) {
   try {
     const response = await axios.get(`${url}/health`, { timeout: 5000 });
+    console.log(response.data);
     return response.data.status === 'healthy';
   } catch {
     return false;
