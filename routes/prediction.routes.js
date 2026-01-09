@@ -14,7 +14,7 @@ import { isAuthenticated } from '../middlewares/auth.middlewares.js';
 
 const router = express.Router();
 
-// router.use(isAuthenticated)
+router.use(isAuthenticated)
 
 router.get('/', healthCheck);
 
